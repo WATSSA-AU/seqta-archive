@@ -62,7 +62,11 @@ jobs:
         run: |
           set -o pipefail
           exec 3>&1
-          report() { { tail -n 25 /tmp/smoke.log | while IFS= read -r l; do echo "::error::$l"; done; docker logs a 2>&1 | tail -n 15 | while IFS= read -r l; do echo "::error::container: $l"; done; } >&3 2>&1; }
+          report() {
+            m=$(tail -n 20 /tmp/smoke.log; echo "--- container log:"; docker logs a 2>&1 | tail -n 15)
+            m=${m//'%'/'%25'}; m=${m//$'\r'/}; m=${m//$'\n'/'%0A'}
+            echo "::error title=smoke test::$m" >&3
+          }
           trap report ERR
           {
             set -ex
