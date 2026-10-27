@@ -47,6 +47,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "check failed" }
           # PDF via Edge
           & "$env:ProgramFiles\SEQTA Archive\venv\Scripts\python.exe" -c "from seqta_archive import pdf; b = pdf.render('<h1>ci</h1>'); assert b and b[:5] == b'%PDF-', pdf.engine(); print('pdf via', pdf.engine())"
+          if ($LASTEXITCODE -ne 0) { throw "PDF via browser failed" }
+          Write-Host "::notice::Windows installer OK; login page served; PDF engine works"
 
   docker:
     runs-on: ubuntu-latest
@@ -58,14 +60,23 @@ jobs:
       - run: docker build -t seqta-archive:ci .
       - name: Smoke test (fake export)
         run: |
-          python3 tests/make_fake_export.py /tmp/x
-          mkdir -p /tmp/data && chmod 777 /tmp/data
-          docker run --rm -v /tmp/x:/export:ro -v /tmp/data:/data seqta-archive:ci build --export /export --out /data/seqta.db
-          docker run -d --name a -p 8080:8080 -e COOKIE_SECURE=0 -v /tmp/data:/data:ro -v /tmp/x:/export:ro seqta-archive:ci
-          for i in $(seq 1 30); do curl -fsS localhost:8080/readyz && break; sleep 1; done
-          curl -fsS localhost:8080/login | grep -q "SEQTA Archive"
-          echo "a long docker password" | docker exec -i a seqta-archive user add admin --admin --password-stdin
-          docker exec a seqta-archive check
+          set -o pipefail
+          exec 3>&1
+          report() { { tail -n 25 /tmp/smoke.log | while IFS= read -r l; do echo "::error::$l"; done; docker logs a 2>&1 | tail -n 15 | while IFS= read -r l; do echo "::error::container: $l"; done; } >&3 2>&1; }
+          trap report ERR
+          {
+            set -ex
+            python3 tests/make_fake_export.py /tmp/x
+            chmod -R a+rX /tmp/x
+            mkdir -p /tmp/data && chmod 777 /tmp/data
+            docker run --rm -v /tmp/x:/export:ro -v /tmp/data:/data seqta-archive:ci build --export /export --out /data/seqta.db
+            docker run -d --name a -p 8080:8080 -e COOKIE_SECURE=0 -v /tmp/data:/data:ro -v /tmp/x:/export:ro seqta-archive:ci
+            for i in $(seq 1 30); do curl -fsS localhost:8080/readyz && break; sleep 1; done
+            curl -fsS localhost:8080/login | grep -q "SEQTA Archive"
+            echo "a long docker password" | docker exec -i a seqta-archive user add admin --admin --password-stdin
+            docker exec a seqta-archive check
+          } > /tmp/smoke.log 2>&1
+          echo "::notice::docker smoke test passed"
       - name: Publish image (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
