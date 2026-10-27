@@ -60,27 +60,24 @@ jobs:
       - run: docker build -t seqta-archive:ci .
       - name: Smoke test (fake export)
         run: |
-          set -o pipefail
-          exec 3>&1
-          report() {
-            m=$(tail -n 20 /tmp/smoke.log; echo "--- container log:"; docker logs a 2>&1 | tail -n 15)
-            m=${m//'%'/'%25'}; m=${m//$'\r'/}; m=${m//$'\n'/'%0A'}
-            echo "::error title=smoke test::$m" >&3
-          }
-          trap report ERR
-          {
-            set -ex
-            python3 tests/make_fake_export.py /tmp/x
-            chmod -R a+rX /tmp/x
-            mkdir -p /tmp/data && chmod 777 /tmp/data
-            docker run --rm -v /tmp/x:/export:ro -v /tmp/data:/data seqta-archive:ci build --export /export --out /data/seqta.db
-            docker run -d --name a -p 8080:8080 -e COOKIE_SECURE=0 -v /tmp/data:/data:ro -v /tmp/x:/export:ro seqta-archive:ci
-            for i in $(seq 1 30); do curl -fsS localhost:8080/readyz && break; sleep 1; done
-            curl -fsS localhost:8080/login | grep -q "SEQTA Archive"
-            echo "a long docker password" | docker exec -i a seqta-archive user add admin --admin --password-stdin
-            docker exec a seqta-archive check
-          } > /tmp/smoke.log 2>&1
-          echo "::notice::docker smoke test passed"
+          set -ex
+          exec > /tmp/smoke.log 2>&1
+          python3 tests/make_fake_export.py /tmp/x
+          chmod -R a+rX /tmp/x
+          mkdir -p /tmp/data && chmod 777 /tmp/data
+          docker run --rm -v /tmp/x:/export:ro -v /tmp/data:/data seqta-archive:ci build --export /export --out /data/seqta.db
+          ls -la /tmp/data
+          docker run -d --name a -p 8080:8080 -e COOKIE_SECURE=0 -v /tmp/data:/data:ro -v /tmp/x:/export:ro seqta-archive:ci
+          for i in $(seq 1 30); do curl -fsS localhost:8080/readyz && break; sleep 1; done
+          curl -fsS localhost:8080/login | grep -q "SEQTA Archive"
+          echo "a long docker password" | docker exec -i a seqta-archive user add admin --admin --password-stdin
+          docker exec a seqta-archive check
+      - name: Report smoke-test output
+        if: always()
+        run: |
+          m=$(tail -n 40 /tmp/smoke.log 2>&1; echo "--- container:"; docker logs a 2>&1 | tail -n 20)
+          m=${m//'%'/'%25'}; m=${m//$'\r'/}; m=${m//$'\n'/'%0A'}
+          echo "::notice title=smoke log::$m"
       - name: Publish image (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
