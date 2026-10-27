@@ -1,0 +1,30 @@
+*,*::before,*::after{box-sizing:border-box}
+body{font:11pt/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#111;
+  max-width:880px;margin:0 auto;padding:24px}
+h1{font-size:20pt;margin:.2rem 0}
+h2{font-size:13pt;margin:1.4rem 0 .5rem;padding-bottom:.2rem;border-bottom:2px solid #222;break-after:avoid}
+.rh p{margin:.2rem 0}
+.conf{font-size:9pt;font-weight:700;letter-spacing:.08em;color:#a01818;text-transform:uppercase}
+.gen{font-size:9pt;color:#555}
+table{border-collapse:collapse;width:100%;font-size:10pt}
+.kv th{text-align:left;width:32%;font-weight:600;color:#444;padding:2px 8px 2px 0;vertical-align:top}
+.kv td{padding:2px 0}
+.grid th,.grid td{border:1px solid #bbb;padding:3px 6px;text-align:left;vertical-align:top}
+.grid th{background:#eee}
+.e{border-left:3px solid #999;padding:2px 0 2px 9px;margin:0 0 9px;break-inside:avoid}
+.eh{font-weight:600;font-size:10pt}
+.eb{white-space:pre-wrap;word-break:break-word}
+.ef{font-size:9pt;color:#555}
+.nowrap{white-space:nowrap}
+.endnote{margin-top:2rem;font-size:9pt;color:#555}
+.toolbar{position:sticky;top:0;background:#17213a;color:#e8ecf6;padding:10px 14px;margin:-24px -24px 20px;
+  display:flex;gap:1rem;align-items:center;flex-wrap:wrap;font:13px/1.4 -apple-system,"Segoe UI",sans-serif}
+.toolbar button,.toolbar .tbtn{background:#3d5bd0;color:#fff;border:0;border-radius:6px;padding:7px 14px;font:inherit;cursor:pointer;text-decoration:none}
+.toolbar .ghost{background:transparent;border:1px solid #5d6f9f;color:#e8ecf6}
+.toolbar a{color:#b9c7ff}.toolbar a.on{color:#fff;font-weight:700;text-decoration:underline}
+.toolbar .dim{color:#9aa6c4;font-size:12px}
+@media print{
+  .noprint{display:none!important}
+  body{max-width:none;padding:0}
+  @page{margin:15mm 14mm}
+}

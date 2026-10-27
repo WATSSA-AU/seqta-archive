@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block main %}
+<h1>Users</h1>
+{% if error %}<p class="banner bad">{{ error }}</p>{% endif %}
+{% if shown_password %}
+<p class="banner ok">Temporary password for <strong>{{ shown_password[0] }}</strong>: <code class="key">{{ shown_password[1] }}</code><br>
+<span class="small">Give it to them in person or by phone. It won't be shown again, and they'll choose their own at first sign-in.</span></p>
+{% endif %}
+
+<section class="card">
+  <h2>Add a user</h2>
+  <form method="post" class="filters">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="create">
+    <input name="username" placeholder="Username (e.g. staff ID)" required>
+    <input name="display" placeholder="Full name">
+    <select name="role" aria-label="Role"><option value="user">User</option><option value="admin">Administrator</option></select>
+    <button type="submit">Create</button>
+  </form>
+  <p class="dim small">Users can see every student record. Administrators also see the audit log and manage users.</p>
+</section>
+
+<div class="tw"><table class="t">
+<thead><tr><th>User</th><th>Role</th><th>Two-step</th><th>Status</th><th>Last sign-in</th><th></th></tr></thead>
+<tbody>
+{% for u in users %}
+<tr>
+  <td><strong>{{ u.username }}</strong>{% if u.display %}<br><span class="dim">{{ u.display }}</span>{% endif %}</td>
+  <td>{{ 'Administrator' if u.role == 'admin' else 'User' }}</td>
+  <td>{{ 'On' if u.totp_enabled else '—' }}</td>
+  <td>{% if u.disabled %}<span class="badge muted">Disabled</span>{% elif u.locked_until and u.locked_until > now %}<span class="badge bad">Locked</span>{% elif u.must_change %}<span class="badge warn">Must change password</span>{% else %}<span class="badge ok">Active</span>{% endif %}</td>
+  <td class="nowrap">{{ u.last_login|localdt if u.last_login else '—' }}</td>
+  <td class="nowrap">
+    {% for act, label in [('reset_password','Reset password'),('reset_totp','Reset two-step'),('unlock','Unlock'),('disable' if not u.disabled else 'enable', 'Disable' if not u.disabled else 'Enable'),('make_user' if u.role == 'admin' else 'make_admin', 'Make user' if u.role == 'admin' else 'Make admin')] %}
+      {% if not (act == 'reset_totp' and not u.totp_enabled) and not (act == 'unlock' and not (u.locked_until and u.locked_until > now)) %}
+      <form method="post" class="inline"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="uid" value="{{ u.id }}"><input type="hidden" name="action" value="{{ act }}"><button class="linkbtn" type="submit">{{ label }}</button></form>
+      {% endif %}
+    {% endfor %}
+  </td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+{% endblock %}

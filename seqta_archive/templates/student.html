@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% from "_macros.html" import files, status with context %}
+{% block title %}{{ P.name }}{% endblock %}
+{% block main %}
+{% set s = P.s %}
+<div class="prof-hdr">
+  <div>
+    <h1>{{ P.name }} {{ status(s.status) }}</h1>
+    <p class="sub">
+      {{ s.studentCode }}
+      {% if LK.year.get(s.schoolyear) %} · Year {{ LK.year.get(s.schoolyear) }}{% endif %}
+      {% if LK.roll.get(s.rollgroup) %} · Roll {{ LK.roll.get(s.rollgroup) }}{% endif %}
+      {% if LK.house.get(s.house) %} · {{ LK.house.get(s.house) }}{% endif %}
+      {% if s.birth_date %} · born {{ s.birth_date|d }}{% endif %}
+      {% if s.entry_date %} · {% if s.exit_date %}{{ s.entry_date|d }} – {{ s.exit_date|d }}{% elif s.status == 'FULL' %}{{ s.entry_date|d }} – present{% else %}entered {{ s.entry_date|d }} (exit date not recorded){% endif %}{% endif %}
+    </p>
+    {% if P.flags %}<p>{% for f in P.flags %}<span class="badge warn">{{ f }}</span> {% endfor %}</p>{% endif %}
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('a.bundle_zip', sid=s.studentID) }}" title="One ZIP: the full record as a PDF{% if P.att_total %} plus {{ P.att_total }} attachment{{ 's' if P.att_total != 1 }}{% endif %}. Correspondence is listed by subject.">Download everything{% if P.att_total %} <span class="btn-sub">PDF + {{ P.att_total }} file{{ 's' if P.att_total != 1 }}</span>{% endif %}</a>
+    <a class="btn ghost" href="{{ url_for('a.report', sid=s.studentID) }}" target="_blank" rel="noopener">Report…</a>
+    {% if P.att_total %}<a class="btn ghost" href="{{ url_for('a.attachments_zip', sid=s.studentID) }}">Attachments only</a>{% endif %}
+  </div>
+</div>
+
+<nav class="jump">
+  <a href="#details">Details</a>
+  {% if P.alerts %}<a href="#alerts">Alerts <i>{{ P.alerts|length }}</i></a>{% endif %}
+  <a href="#contacts">Contacts <i>{{ P.contacts|length }}</i></a>
+  <a href="#pastoral">Pastoral <i>{{ P.pastoral|length }}</i></a>
+  {% if P.sickbay %}<a href="#sickbay">Sickbay <i>{{ P.sickbay|length }}</i></a>{% endif %}
+  {% if P.notes %}<a href="#notes">Notes <i>{{ P.notes|length }}</i></a>{% endif %}
+  {% if P.plans %}<a href="#plans">Plans <i>{{ P.plans|length }}</i></a>{% endif %}
+  {% if P.goals %}<a href="#goals">Goals</a>{% endif %}
+  {% if P.bullying %}<a href="#bullying">Bullying <i>{{ P.bullying|length }}</i></a>{% endif %}
+  {% if P.messages %}<a href="#messages">Messages <i>{{ P.messages|length }}</i></a>{% endif %}
+  <a href="#correspondence">Correspondence <i>{{ "{:,}".format(P.corr_count) }}</i></a>
+  {% if P.documents %}<a href="#documents">Documents <i>{{ P.documents|length }}</i></a>{% endif %}
+  {% if P.folio %}<a href="#folio">Folio</a>{% endif %}
+</nav>
+
+<section class="card" id="details">
+  <h2>Details</h2>
+  <dl class="pd">{% for k, v in P.details %}<div><dt>{{ k }}</dt><dd>{{ v }}</dd></div>{% endfor %}</dl>
+  {% if P.notes_on_file %}
+  <h3>Notes on the student record</h3>
+  <div class="grid2">{% for lbl, v in P.notes_on_file %}<div class="nc"><div class="nc-title">{{ lbl }}</div><div class="nc-body">{{ v }}</div></div>{% endfor %}</div>
+  {% endif %}
+</section>
+
+{% if P.alerts %}
+<section class="card" id="alerts">
+  <h2>Alerts</h2>
+  <ul class="plain">{% for a in P.alerts %}<li><span class="badge warn">{{ a.alertType }}</span> <span class="dim">set {{ a.updated_date|dt }}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+<section class="card" id="contacts">
+  <h2>Contacts</h2>
+  {% if P.contacts %}
+  <div class="grid2">
+  {% for c in P.contacts %}
+    <div class="nc">
+      <div class="nc-hdr"><span class="nc-title">{{ c.name }}</span><span class="badge">{{ c.rel }}</span>{% if c.priority and c.priority != '0' %}<span class="dim">priority {{ c.priority }}</span>{% endif %}{% if c.archived %}<span class="badge muted">archived</span>{% endif %}</div>
+      {% for lbl, v in c.phones %}<div>{{ lbl }}: {{ v }}</div>{% endfor %}
+      {% if c.email %}<div>{{ c.email }}</div>{% endif %}
+      {% if c.addr %}<div class="dim">{{ c.addr }}</div>{% endif %}
+      {% if c.occupation %}<div class="dim">{{ c.occupation }}</div>{% endif %}
+      {% if c.receives %}<div class="dim">Receives: {{ c.receives|join(', ') }}</div>{% endif %}
+      {% if c.custody %}<div class="nc-body warnbox"><strong>Custody:</strong> {{ c.custody }}</div>{% endif %}
+    </div>
+  {% endfor %}
+  </div>
+  {% else %}<p class="empty">No contacts recorded.</p>{% endif %}
+</section>
+
+<section class="card" id="pastoral">
+  <h2>Pastoral care <span class="count">{{ P.pastoral|length }}</span></h2>
+  {% if P.pastoral %}
+  <div class="filters js-pcfilter">
+    <select aria-label="Type"><option value="">All types</option>{% for t in P.pastoral_types %}<option>{{ t }}</option>{% endfor %}</select>
+    <input type="search" placeholder="Filter these entries…" aria-label="Filter">
+    <span class="dim js-pccount"></span>
+  </div>
+  {% for p in P.pastoral %}
+  <article class="nc js-pc" id="pc-{{ p.id }}" data-type="{{ p.type }}">
+    <div class="nc-hdr">
+      <span class="nc-title">{{ p.type }}</span>
+      {% if p.tag %}<span class="badge">{{ p.tag }}</span>{% endif %}
+      <span class="nc-meta">{{ p.from|dt }}{% if p.until and p.until[:16] != p.from[:16] %} – {{ p.until|dt }}{% endif %}</span>
+      <span class="nc-meta">{{ p.staff }}{% if p.via %} (via {{ p.via }}){% endif %}</span>
+      {% if p.restricted %}<span class="badge warn">Restricted</span>{% endif %}
+      {% if p.followup %}<span class="badge {{ 'ok' if p.followed_up else 'warn' }}">Follow-up {{ 'done' if p.followed_up else 'required' }}</span>{% endif %}
+    </div>
+    {% if p.details %}<div class="nc-body">{{ p.details }}</div>{% endif %}
+    {% if p.present or p.points or p.sent %}<div class="nc-foot">
+      {% if p.present %}<span>Student present</span>{% endif %}
+      {% if p.points %}<span>Points: {{ p.points }}</span>{% endif %}
+      {% if p.sent %}<span>Notified: {{ p.sent|join(', ') }}</span>{% endif %}
+    </div>{% endif %}
+    {{ files(p.files) }}
+  </article>
+  {% endfor %}
+  {% else %}<p class="empty">No pastoral care entries.</p>{% endif %}
+</section>
+
+{% if P.sickbay %}
+<section class="card" id="sickbay">
+  <h2>Sickbay <span class="count">{{ P.sickbay|length }}</span></h2>
+  {% for b in P.sickbay %}
+  <article class="nc" id="sb-{{ b.id }}">
+    <div class="nc-hdr">
+      <span class="nc-title">{{ b.location or 'Sickbay' }}</span>
+      <span class="nc-meta">{{ b.from|dt }}{% if b.until and b.until[:16] != b.from[:16] %} – {{ b.until|dt }}{% endif %}</span>
+      <span class="nc-meta">{{ b.staff }}</span>
+      {% for lbl, det, red in b.flags %}<span class="badge {{ 'bad' if red else '' }}">{{ lbl }}</span>{% endfor %}
+    </div>
+    {% if b.notes %}<div class="nc-body">{{ b.notes }}</div>{% endif %}
+    {% if b.treatment %}<div class="nc-body"><strong>Treatment:</strong> {{ b.treatment }}</div>{% endif %}
+    {% for lbl, det, red in b.flags %}{% if det %}<div class="nc-body"><strong>{{ lbl }}:</strong> {{ det }}</div>{% endif %}{% endfor %}
+    {% for lbl, ts, v in b.extra %}<div class="nc-foot"><span>{{ lbl }} {{ ts|dt }}: {{ v }}</span></div>{% endfor %}
+    {% if b.attendance %}<div class="nc-foot"><span>Attendance: {{ b.attendance }}</span></div>{% endif %}
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if P.notes %}
+<section class="card" id="notes">
+  <h2>Notes <span class="count">{{ P.notes|length }}</span></h2>
+  {% for n in P.notes %}
+  <article class="nc" id="note-{{ n.id }}">
+    <div class="nc-hdr">
+      <span class="nc-title">{{ (n.type or 'note')|capitalize }}</span>
+      {% if n.severity %}<span class="badge">{{ n.severity }}</span>{% endif %}
+      {% if n.internal|yes %}<span class="badge muted">Internal</span>{% endif %}
+      <span class="nc-meta">{{ n.updated_date|dt }}</span>
+      {% if n.updated_by_staffSalutation or n.updated_by_staffCode %}<span class="nc-meta">{{ n.updated_by_staffSalutation or staff_name(code=n.updated_by_staffCode) }}</span>{% endif %}
+    </div>
+    <div class="nc-body">{{ n.note }}</div>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if P.plans %}
+<section class="card" id="plans">
+  <h2>Support plans <span class="count">{{ P.plans|length }}</span></h2>
+  {% for x in P.plans %}{% set r = x.r %}
+  <article class="nc" id="sp-{{ r.id }}">
+    <div class="nc-hdr">
+      <span class="nc-title">{{ r.studentplantype }}</span>
+      {% if r.status %}<span class="badge {{ 'ok' if r.status == 'active' else 'muted' }}">{{ r.status }}</span>{% endif %}
+      {% if r.review_date %}<span class="nc-meta">Reviewed {{ r.review_date|d }}</span>{% endif %}
+      {% if r.next_review_date %}<span class="nc-meta">Next review {{ r.next_review_date|d }}</span>{% endif %}
+      <span class="nc-meta">Updated {{ r.updated_date|dt }}</span>
+    </div>
+    {% if r.panel %}<div class="nc-body"><strong>Panel:</strong> {{ r.panel }}</div>{% endif %}
+    {% if r.background %}<div class="nc-body">{{ r.background }}</div>{% endif %}
+    {% for lbl, v in x.fields %}<div class="nc-body"><strong>{{ lbl }}:</strong> {{ v }}</div>{% endfor %}
+    {{ files(x.files) }}
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if P.goals %}
+<section class="card" id="goals">
+  <h2>Goals</h2>
+  {% for gh in P.goals %}
+    {% if gh.h.overview %}<div class="nc"><div class="nc-title">Overview</div><div class="nc-body">{{ gh.h.overview }}</div></div>{% endif %}
+    {% for x in gh.goals %}
+    <article class="nc">
+      <div class="nc-hdr"><span class="nc-title">{{ x.g.year or 'Goal' }}</span><span class="nc-meta">Updated {{ x.g.updated_date|dt }}</span></div>
+      {% if x.g.notes %}<div class="nc-body">{{ x.g.notes }}</div>{% endif %}
+      {% if x.g.student_notes %}<div class="nc-body"><strong>Student:</strong> {{ x.g.student_notes }}</div>{% endif %}
+      {% for d in x.details %}
+        <div class="nc-body">{% if d.goals %}<strong>Goal:</strong> {{ d.goals }}<br>{% endif %}{% if d.support %}<strong>Support:</strong> {{ d.support }}<br>{% endif %}{% if d.action %}<strong>Action:</strong> {{ d.action }}<br>{% endif %}{% if d.notes %}<strong>Notes:</strong> {{ d.notes }}{% endif %}{% if d.completed|yes %} <span class="badge ok">Completed</span>{% endif %}</div>
+      {% endfor %}
+    </article>
+    {% endfor %}
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if P.bullying %}
+<section class="card" id="bullying">
+  <h2>Bullying incidents</h2>
+  {% for b in P.bullying %}
+  <article class="nc">
+    <div class="nc-hdr"><span class="nc-title">{{ b.type }}{% if b.form %} · {{ b.form }}{% endif %}</span><span class="badge">{{ b.role }}</span><span class="nc-meta">{{ b.datetime|dt }}</span>{% if b.severity %}<span class="badge warn">{{ b.severity }}</span>{% endif %}{% if b.status %}<span class="badge muted">{{ b.status }}</span>{% endif %}</div>
+    {% if b.notes %}<div class="nc-body">{{ b.notes }}</div>{% endif %}
+    {% if b.actions %}<div class="nc-body"><strong>Actions:</strong> {{ b.actions }}</div>{% endif %}
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if P.messages %}
+<section class="card" id="messages">
+  <h2>SEQTA messages <span class="count">{{ P.messages|length }}</span></h2>
+  <p class="dim">Direct messages inside SEQTA that this student sent, received or was included in. Open one to read it.</p>
+  {% for m in P.messages %}{% set r = m.r %}
+  <details class="nc js-msg" id="msg-{{ r.id }}" data-src="{{ url_for('a.message_body', mid=r.id) }}">
+    <summary class="nc-hdr"><span class="nc-title">{{ r.subject or '(no subject)' }}</span><span class="nc-meta">{{ r.sender_name }}</span><span class="nc-meta">{{ r.updated_date|dt }}</span><span class="nc-meta">{{ r.nparts }} participant{{ 's' if r.nparts != 1 }}</span>{% if m.files %}<span class="badge">{{ m.files|length }} file{{ 's' if m.files|length != 1 }}</span>{% endif %}</summary>
+    <iframe class="body" sandbox title="Message body"></iframe>
+    {{ files(m.files) }}
+  </details>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="card" id="correspondence">
+  <h2>Correspondence <span class="count">{{ "{:,}".format(P.corr_count) }}</span></h2>
+  <p class="dim">Emails, SMS, portal notices and letters that SEQTA sent about or to this student — including pastoral notifications to parents and staff.</p>
+  {% if P.corr_recent %}
+  {% include "_corr_table.html" with context %}
+  {% if P.corr_count > P.corr_shown %}<p><a class="btn ghost" href="{{ url_for('a.student_corr', sid=s.studentID) }}">All {{ "{:,}".format(P.corr_count) }} items — filter by subject or type →</a></p>{% endif %}
+  {% else %}<p class="empty">No correspondence linked to this student.</p>{% endif %}
+</section>
+
+{% if P.documents %}
+<section class="card" id="documents">
+  <h2>Documents <span class="count">{{ P.documents|length }}</span></h2>
+  <p class="dim">Files SEQTA exported against this student that aren't attached to a specific record (e.g. SIP documents).</p>
+  {{ files(P.documents) }}
+</section>
+{% endif %}
+
+{% if P.folio %}
+<section class="card" id="folio">
+  <h2>Folio</h2>
+  {% for f in P.folio %}
+  <article class="nc"><div class="nc-hdr"><span class="nc-title">{{ f.title }}</span><span class="nc-meta">{{ f.updated_date|dt }}</span>{% if f.deleted|yes %}<span class="badge muted">deleted</span>{% endif %}</div>{% if f.contents %}<div class="nc-body">{{ f.contents }}</div>{% endif %}</article>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

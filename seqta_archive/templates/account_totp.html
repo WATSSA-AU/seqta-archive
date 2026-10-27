@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Two-step sign-in{% endblock %}
+{% block main %}
+<section class="card auth wide">
+  <h1>Two-step sign-in</h1>
+  {% if not u.totp_enabled %}<p class="banner">Two-step sign-in is {{ 'required' if config_required else 'recommended' }} for this archive. It takes a minute.</p>{% endif %}
+  {% if error %}<p class="banner bad">{{ error }}</p>{% endif %}
+  <ol class="steps">
+    <li>Open an authenticator app on your phone (Microsoft Authenticator, Google Authenticator, 1Password…).</li>
+    <li>Add an account by scanning this code{% if not qr %} (or typing the key below){% endif %}:
+      {% if qr %}<div class="qr">{{ qr|safe }}</div>{% endif %}
+      <p class="small">Can't scan? Enter this key: <code class="key">{{ secret }}</code></p></li>
+    <li>Type the 6-digit code it shows:
+      <form method="post" class="stack narrow">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" required autofocus>
+        <label class="small">Your current password <input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Turn on</button>
+      </form></li>
+  </ol>
+  {% if u.totp_enabled %}
+  <form method="post" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="disable">
+    <input name="password" type="password" placeholder="Current password" autocomplete="current-password" required>
+    <button class="linkbtn" type="submit">Turn two-step sign-in off</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

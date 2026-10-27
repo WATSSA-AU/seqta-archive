@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block bodyclass %}plain{% endblock %}
+{% block header %}{% endblock %}
+{% block main %}
+<section class="card auth">
+  <h1><span class="mark">▣</span> SEQTA Archive</h1>
+  <p class="dim">{{ school }}</p>
+  {% if error %}<p class="banner bad">{{ error }}</p>{% endif %}
+  <form method="post" action="{{ url_for('a.login') }}" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ nxt }}">
+    <label>Username <input name="username" autocomplete="username" required autofocus></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <label>Authenticator code <span class="dim small">(if you've set one up)</span>
+      <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7"></label>
+    <button type="submit">Sign in</button>
+  </form>
+  <p class="dim small">Access is limited to authorised staff and every record opened is logged. Forgotten your password? Ask your ICT administrator to reset it.</p>
+</section>
+{% endblock %}

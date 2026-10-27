@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Search records{% endblock %}
+{% block main %}
+<h1>Search records</h1>
+<form class="filters" action="{{ url_for('a.search') }}">
+  <input name="q" type="search" value="{{ text }}" placeholder="Words to find, e.g. anaphylaxis, restraining order, Year 9 camp" autofocus>
+  <select name="scope" aria-label="Where">
+    <option value="records" {{ 'selected' if scope == 'records' }}>Student records</option>
+    <option value="corr" {{ 'selected' if scope == 'corr' }} {{ '' if has_corr_fts else 'disabled' }}>Correspondence (emails, SMS, letters)</option>
+  </select>
+  {% if scope == 'records' %}
+  <select name="kind" aria-label="Record type">
+    <option value="">All record types</option>
+    {% for k, lbl in [('pastoral','Pastoral care'),('sickbay','Sickbay'),('note','Notes'),('plan','Support plans'),('message','SEQTA messages'),('goal','Goals'),('folio','Folio')] %}
+    <option value="{{ k }}" {{ 'selected' if kind == k }}>{{ lbl }}</option>{% endfor %}
+  </select>
+  {% endif %}
+  <button type="submit">Search</button>
+</form>
+<p class="dim small">Every word must appear. The last word also matches longer words (camp → camping). Best 300 matches shown.</p>
+
+{% if error %}<p class="empty">{{ error }}</p>{% endif %}
+
+{% if results %}
+<p class="dim">{{ results|length }}{% if results|length == 300 %}+{% endif %} matches</p>
+{% for r in results %}
+<div class="hit">
+  <div class="hit-h"><span class="badge">{{ r.kind }}</span>
+    {% if r.sid %}<a href="{{ url_for('a.record', kind=r.kind, ref=r.ref, sid=r.sid) }}"><strong>{{ r.name }}</strong></a>{% endif %}
+    <span class="dim">{{ r.sent|dt }}</span></div>
+  <div class="hit-b">{{ r.snip }}</div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if corr %}
+<p class="dim">{{ corr|length }}{% if corr|length == 300 %}+{% endif %} matches</p>
+<div class="tw"><table class="t">
+<thead><tr><th>Sent</th><th>Type</th><th>Subject</th><th>Student</th></tr></thead>
+<tbody>
+{% for x in corr %}
+<tr><td class="nowrap">{{ x.c.sent|dt }}</td><td><span class="badge">{{ x.c.type }}</span></td>
+<td><a href="{{ url_for('a.correspondence', cid=x.c.id) }}">{{ x.c.subject or '(no subject)' }}</a></td>
+<td>{% for sid, nm in x.students %}<a href="{{ url_for('a.student', sid=sid) }}">{{ nm }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% if x.more %} +{{ x.more }}{% endif %}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+
+{% if text and not results and not corr and not error %}<p class="empty">No matches.</p>{% endif %}
+{% endblock %}

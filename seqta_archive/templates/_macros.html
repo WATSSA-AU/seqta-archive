@@ -1,0 +1,20 @@
+{% macro files(list) -%}
+{% if list %}<div class="files">{% for a in list %}<a class="file" href="{{ url_for('a.file', fid=a.id) }}" {% if a.ext in ('.pdf','.jpg','.jpeg','.png','.gif','.mp4','.mov','.mp3','.m4a','.wav','.txt','.webp') %}target="_blank" rel="noopener"{% endif %} title="{{ a.name }} · {{ a.size|hsize }}"><span class="fi">{{ a.ext[1:]|upper or 'FILE' }}</span>{{ a.name }}</a>{% endfor %}</div>{% endif %}
+{%- endmacro %}
+
+{% macro pager(pg) -%}
+{% if pg.pages > 1 %}
+<nav class="pager">
+  {% if pg.page > 1 %}<a href="{{ page_url(pg.page - 1) }}">‹ Prev</a>{% endif %}
+  {% if pg.window()[0] > 1 %}<a href="{{ page_url(1) }}">1</a>{% if pg.window()[0] > 2 %}<span>…</span>{% endif %}{% endif %}
+  {% for n in pg.window() %}{% if n == pg.page %}<span class="cur">{{ n }}</span>{% else %}<a href="{{ page_url(n) }}">{{ n }}</a>{% endif %}{% endfor %}
+  {% if pg.window()[-1] < pg.pages %}{% if pg.window()[-1] < pg.pages - 1 %}<span>…</span>{% endif %}<a href="{{ page_url(pg.pages) }}">{{ pg.pages }}</a>{% endif %}
+  {% if pg.page < pg.pages %}<a href="{{ page_url(pg.page + 1) }}">Next ›</a>{% endif %}
+  <span class="pinfo">{{ "{:,}".format(pg.total) }} total · page {{ pg.page }} of {{ pg.pages }}</span>
+</nav>
+{% endif %}
+{%- endmacro %}
+
+{% macro status(s) -%}
+<span class="badge {{ 'ok' if s == 'FULL' else 'muted' }}">{{ status_label(s) }}</span>
+{%- endmacro %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager with context %}
+{% block title %}{{ name }}{% endblock %}
+{% block main %}
+<p class="crumb"><a href="{{ url_for('a.tables') }}">← Tables</a></p>
+<h1>{{ name }} <span class="dim small">{{ src.source }}</span></h1>
+<form class="filters" action="{{ url_for('a.table', name=name) }}">
+  <input name="q" type="search" value="{{ text }}" placeholder="Contains…">
+  <select name="col" aria-label="Column"><option value="">Any column</option>{% for c in cols %}<option {{ 'selected' if col == c }}>{{ c }}</option>{% endfor %}</select>
+  <button type="submit">Filter</button>
+</form>
+<div class="tw"><table class="t raw">
+<thead><tr>{% for c in cols %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for r in rows %}<tr>{% for c in cols %}<td title="{{ r[c] }}">{{ r[c] }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="{{ cols|length }}" class="empty">No rows.</td></tr>{% endfor %}
+</tbody></table></div>
+{{ pager(pg) }}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager with context %}
+{% block title %}Audit log{% endblock %}
+{% block main %}
+<h1>Audit log</h1>
+<form class="filters" action="{{ url_for('a.audit_view') }}">
+  <input name="user" type="search" value="{{ user_f }}" placeholder="User">
+  <input name="student" type="search" value="{{ stu }}" placeholder="Student ID" size="10">
+  <select name="action" aria-label="Action"><option value="">All actions</option>{% for a in actions %}<option {{ 'selected' if action == a }}>{{ a }}</option>{% endfor %}</select>
+  <button type="submit">Filter</button>
+</form>
+<div class="tw"><table class="t">
+<thead><tr><th>When (AWST)</th><th>User</th><th>Action</th><th>Student</th><th>Target</th><th>Detail</th><th>IP</th></tr></thead>
+<tbody>
+{% for x in rows %}{% set r = x.r %}
+<tr><td class="nowrap">{{ x.ts }}</td><td>{{ r.user }}</td><td>{{ r.action }}</td>
+<td>{% if r.student_id %}<a href="{{ url_for('a.student', sid=r.student_id) }}">{{ r.student_id }}</a>{% endif %}</td>
+<td>{{ r.target }}</td><td>{{ r.detail }}</td><td class="dim">{{ r.ip }}</td></tr>
+{% else %}<tr><td colspan="7" class="empty">Nothing logged.</td></tr>{% endfor %}
+</tbody></table></div>
+{{ pager(pg) }}
+{% endblock %}

@@ -1,0 +1,61 @@
+# SEQTA Archive - Docker Compose
+#
+#   1. Copy the SEQTA export folder (au_wa_yourschool) into ./export/
+#   2. cp .env.example .env   and edit it
+#   3. sudo install -d -o 10001 -g 10001 -m 0700 data
+#      sudo chown -R 10001:10001 export && sudo chmod -R go-rwx export
+#   4. docker compose run --rm build              (builds ./data/seqta.db - 10 to 30 minutes)
+#   5. docker compose up -d
+#   6. docker compose exec archive seqta-archive user add yourname --admin
+#
+# With HTTPS (recommended):  docker compose --profile https up -d
+# With an OIDC provider:     docker compose -f compose.yaml -f compose.oidc.yaml up -d
+
+name: seqta-archive
+
+services:
+  archive:
+    image: ${IMAGE:-ghcr.io/watssa-au/seqta-archive:latest}
+    build: ..
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SEQTA_DATA_DIR: /data
+      PORT: "8080"          # inside the container; change HOST_PORT for the host side
+    volumes:
+      - ./data:/data:ro
+      - ./export:/export:ro
+      - state:/state
+    ports:
+      - "${BIND:-127.0.0.1}:${HOST_PORT:-8080}:8080"
+
+  # One-off: docker compose run --rm build
+  build:
+    image: ${IMAGE:-ghcr.io/watssa-au/seqta-archive:latest}
+    build: ..
+    profiles: ["tools"]
+    user: "10001:10001"
+    command: ["build", "--export", "/export", "--out", "/data/seqta.db"]
+    volumes:
+      - ./data:/data
+      - ./export:/export:ro
+
+  # HTTPS in front of the archive: docker compose --profile https up -d
+  caddy:
+    image: caddy:2
+    profiles: ["https"]
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+      UPSTREAM: ${UPSTREAM:-archive:8080}
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy_data:/data
+
+volumes:
+  state:
+  caddy_data:

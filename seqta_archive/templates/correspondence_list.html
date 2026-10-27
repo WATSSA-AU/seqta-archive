@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager with context %}
+{% block title %}Correspondence · {{ name }}{% endblock %}
+{% block main %}
+<p class="crumb"><a href="{{ url_for('a.student', sid=s.studentID) }}">← {{ name }}</a></p>
+<h1>Correspondence for {{ name }}</h1>
+<form class="filters" action="{{ url_for('a.student_corr', sid=s.studentID) }}">
+  <input name="q" type="search" value="{{ text }}" placeholder="Subject contains…">
+  <select name="type" aria-label="Type"><option value="">All types</option>{% for t in types %}<option value="{{ t }}" {{ 'selected' if ctype == t }}>{{ t }}</option>{% endfor %}</select>
+  <button type="submit">Filter</button>
+  <span class="dim small">Copies of one message to several recipients are grouped; a group can continue onto the next page.</span>
+  <span class="dim">To search inside message bodies, use <a href="{{ url_for('a.search', scope='corr') }}">Search records → correspondence</a>.</span>
+</form>
+{% if rows %}
+{% include "_corr_table.html" %}
+{{ pager(pg) }}
+{% else %}<p class="empty">Nothing matches.</p>{% endif %}
+{% endblock %}

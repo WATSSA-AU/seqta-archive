@@ -1,0 +1,34 @@
+# Needs Docker Compose 2.24.4 or newer (for "ports: !reset").
+#
+# Overlay: sign in through an OIDC provider (Keycloak, Entra ID, Google Workspace, Authentik...)
+# instead of built-in accounts.
+#
+#   docker compose -f compose.yaml -f compose.oidc.yaml up -d
+#   (add --profile https and set UPSTREAM=oauth2-proxy:4180 in .env for HTTPS via Caddy)
+#
+# Edit oauth2-proxy.cfg first, and put the client secret + a cookie secret in .env.
+
+services:
+  archive:
+    environment:
+      AUTH_MODE: proxy
+      TRUSTED_PROXIES: oauth2-proxy
+    ports: !reset []
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
+    restart: unless-stopped
+    command: ["--config=/etc/oauth2-proxy.cfg"]
+    environment:
+      OAUTH2_PROXY_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?set OIDC_CLIENT_SECRET in .env}
+      OAUTH2_PROXY_COOKIE_SECRET: ${OIDC_COOKIE_SECRET:?set OIDC_COOKIE_SECRET in .env}
+    volumes:
+      - ./oauth2-proxy.cfg:/etc/oauth2-proxy.cfg:ro
+    ports:
+      - "${BIND:-127.0.0.1}:${HOST_PORT:-8080}:4180"
+    depends_on: [archive, redis]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]

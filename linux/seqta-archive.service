@@ -1,0 +1,21 @@
+[Unit]
+Description=SEQTA Archive
+After=network.target
+
+[Service]
+Type=simple
+User=seqta-archive
+Group=seqta-archive
+Environment=SEQTA_CONFIG=/etc/seqta-archive/seqta-archive.env
+ExecStart=/opt/seqta-archive/venv/bin/seqta-archive serve
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/srv/seqta-archive
+ReadWritePaths=/var/lib/seqta-archive
+
+[Install]
+WantedBy=multi-user.target

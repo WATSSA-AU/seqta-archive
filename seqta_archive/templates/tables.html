@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Tables{% endblock %}
+{% block main %}
+<h1>Export tables</h1>
+<p class="dim">Every CSV in the SEQTA export, loaded unchanged. Use these when the student pages don't show what you need.</p>
+<div class="tw"><table class="t">
+<thead><tr><th>Table</th><th>Source file</th><th class="num">Rows</th><th class="num">Columns</th></tr></thead>
+<tbody>
+{% for r in rows %}
+<tr><td><a href="{{ url_for('a.table', name=r.name) }}">{{ r.name }}</a></td><td class="dim">{{ r.source }}</td><td class="num">{{ "{:,}".format(r.rows or 0) }}</td><td class="num">{{ r.cols }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endblock %}

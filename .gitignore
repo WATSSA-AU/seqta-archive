@@ -1,0 +1,28 @@
+# Never commit student data
+*.db
+*.db-*
+*.db.new
+*.db.prev
+*.building
+au_wa_*/
+export/
+data/
+state/
+docker/export/
+docker/data/
+docker/certs/
+docker/.env
+.env
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+
+.DS_Store

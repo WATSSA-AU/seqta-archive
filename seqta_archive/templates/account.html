@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Your account{% endblock %}
+{% block main %}
+<h1>Your account</h1>
+<section class="card">
+  <dl class="pd">
+    <div><dt>Username</dt><dd>{{ u.username }}</dd></div>
+    {% if u.display %}<div><dt>Name</dt><dd>{{ u.display }}</dd></div>{% endif %}
+    <div><dt>Role</dt><dd>{{ 'Administrator' if u.role == 'admin' else 'User' }}</dd></div>
+    <div><dt>Two-step sign-in</dt><dd>{{ 'On' if u.totp_enabled else 'Off' }}</dd></div>
+    <div><dt>Password last changed</dt><dd>{{ u.pw_changed|localdt }}</dd></div>
+  </dl>
+  <p class="actions-row">
+    <a class="btn" href="{{ url_for('a.account_password') }}">Change password</a>
+    <a class="btn ghost" href="{{ url_for('a.account_totp') }}">{{ 'Set up again' if u.totp_enabled else 'Set up' }} two-step sign-in</a>
+  </p>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ c.subject or 'Correspondence' }}{% endblock %}
+{% block main %}
+<p class="crumb">{% for sid, nm in students %}<a href="{{ url_for('a.student', sid=sid) }}#correspondence">← {{ nm }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+<h1>{{ c.subject or '(no subject)' }}</h1>
+<p class="sub"><span class="badge">{{ c.type }}</span> {{ c.sent|dt }} · SEQTA id {{ c.id }}</p>
+<section class="card">
+  <dl class="pd people">
+  {% for p in people %}
+    <div><dt>{{ p.role }}{% if p.type %} · {{ p.type }}{% endif %}</dt><dd>{{ p.name or '—' }}{% if p.address %} <span class="dim">&lt;{{ p.address }}&gt;</span>{% endif %}{% if p.ok == False %} <span class="badge bad" title="SEQTA's success flag for this recipient was false">flagged unsuccessful</span>{% endif %}</dd></div>
+  {% endfor %}
+  </dl>
+  {% if siblings %}
+  <h3>Same message, logged separately for {{ siblings|length }} other recipient{{ 's' if siblings|length != 1 }}</h3>
+  <p class="small">{% for sid_, to in siblings %}<a href="{{ url_for('a.correspondence', cid=sid_) }}">{{ to or ('#' ~ sid_) }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+  {% endif %}
+</section>
+<section class="card">
+  <p class="dim small">Shown as sent, with links, scripts and remote images switched off.</p>
+  <iframe class="body tall" sandbox src="{{ url_for('a.correspondence_body', cid=c.id) }}" title="Message body"></iframe>
+</section>
+{% endblock %}

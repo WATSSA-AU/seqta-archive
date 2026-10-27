@@ -1,0 +1,21 @@
+# HTTPS front end. SITE_ADDRESS is the name staff will browse to (set it in .env).
+#
+# Certificates, in order of preference:
+#  - your school's certificate: put cert.pem + key.pem in ./certs and swap the tls line for
+#        tls /certs/cert.pem /certs/key.pem
+#  - a public DNS name reachable from the internet: delete the tls line (Let's Encrypt)
+#  - otherwise "tls internal": Caddy's own CA (browsers warn until its root is trusted)
+
+{
+	admin off
+}
+
+{$SITE_ADDRESS} {
+	tls internal
+	encode gzip
+	reverse_proxy {$UPSTREAM} {
+		transport http {
+			response_header_timeout 300s
+		}
+	}
+}

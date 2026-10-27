@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% block title %}SEQTA Archive{% endblock %} · SEQTA Archive</title>
+<link rel="stylesheet" href="{{ url_for('a.static', filename='style.css') }}?v={{ version }}">
+<script src="{{ url_for('a.static', filename='app.js') }}?v={{ version }}" defer></script>
+</head>
+<body class="{% block bodyclass %}{% endblock %}">
+{% block header %}
+<header class="top">
+  <a class="brand" href="{{ url_for('a.home') }}"><span class="mark">▣</span> SEQTA Archive</a>
+  <form class="qs" action="{{ url_for('a.students') }}" role="search">
+    <input name="q" type="search" placeholder="Find a student — name, code or username" autocomplete="off"
+           value="{{ request.args.get('q', '') if request.endpoint == 'a.students' else '' }}">
+  </form>
+  <nav>
+    <a href="{{ url_for('a.students') }}" class="{{ 'on' if request.endpoint in ('a.students', 'a.student', 'a.student_corr') }}">Students</a>
+    <a href="{{ url_for('a.search') }}" class="{{ 'on' if request.endpoint == 'a.search' }}">Search records</a>
+    <a href="{{ url_for('a.tables') }}" class="{{ 'on' if request.endpoint in ('a.tables', 'a.table') }}">Tables</a>
+    {% if is_admin %}<a href="{{ url_for('a.audit_view') }}" class="{{ 'on' if request.endpoint == 'a.audit_view' }}">Audit</a>{% endif %}
+    {% if is_admin and auth_mode == 'local' %}<a href="{{ url_for('a.admin_users') }}" class="{{ 'on' if request.endpoint == 'a.admin_users' }}">Users</a>{% endif %}
+  </nav>
+  {% if auth_mode == 'local' %}
+  <span class="who"><a href="{{ url_for('a.account') }}" title="Your account">{{ display }}</a>
+    <form method="post" action="{{ url_for('a.logout') }}" class="inline">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="linkbtn" type="submit">Sign out</button>
+    </form></span>
+  {% else %}
+  <span class="who" title="Signed in">{{ user }}</span>
+  {% endif %}
+</header>
+{% endblock %}
+<main>
+{% if schema_warnings %}<p class="banner">Some parts of this page couldn't be shown because this school's export is laid out a little differently. The server log has the details.</p>{% endif %}
+{% block main %}{% endblock %}
+</main>
+<footer class="foot">
+  Read-only archive of {{ school }}'s SEQTA export{% if meta.built_at %} · database built {{ meta.built_at|d }}{% endif %} · v{{ version }} · Every record you open is logged.
+</footer>
+</body>
+</html>

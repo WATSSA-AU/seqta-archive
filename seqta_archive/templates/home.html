@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block main %}
+<section class="hero">
+  <h1>SEQTA Archive</h1>
+  <p class="lede">Historical student records from {{ school }}'s SEQTA system{% if rng and rng[0] %}, {{ rng[0][:4] }}–{{ rng[1][:4] }}{% endif %}. Read-only.</p>
+  <form action="{{ url_for('a.students') }}" class="bigsearch" role="search">
+    <input name="q" type="search" placeholder="Student name, code or username" autofocus autocomplete="off">
+    <button type="submit">Find student</button>
+  </form>
+  <p class="hint">Looking for something someone wrote rather than a student? <a href="{{ url_for('a.search') }}">Search inside records and correspondence</a>.</p>
+</section>
+
+<section class="tiles">
+  <a class="tile" href="{{ url_for('a.students') }}"><b>{{ "{:,}".format(stats.students) }}</b><span>students ({{ "{:,}".format(stats.enrolled) }} enrolled at export)</span></a>
+  <div class="tile"><b>{{ "{:,}".format(stats.pastoral) }}</b><span>pastoral care entries</span></div>
+  <div class="tile"><b>{{ "{:,}".format(stats.sickbay) }}</b><span>sickbay visits</span></div>
+  <div class="tile"><b>{{ "{:,}".format(stats.plans) }}</b><span>support plans</span></div>
+  <div class="tile"><b>{{ "{:,}".format(stats.corr) }}</b><span>emails, SMS &amp; letters sent</span></div>
+  <div class="tile"><b>{{ "{:,}".format(stats.files) }}</b><span>attached documents</span></div>
+</section>
+
+<section class="card note">
+  <h2>About this archive</h2>
+  <p>{{ archive_note }} Where SEQTA stored a value as a code (pastoral type, house, year, staff), the archive shows the matching name.</p>
+  <p>It contains medical, custody and wellbeing information. Use it for school business only. Every student profile, document, correspondence item and export you open is recorded against your account.</p>
+</section>
+{% endblock %}

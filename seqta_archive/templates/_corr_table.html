@@ -1,0 +1,17 @@
+{% set crows = rows if rows is defined else P.corr_recent %}
+<div class="tw">
+<table class="t corr">
+  <thead><tr><th>Sent</th><th>Type</th><th>Subject</th><th>From</th><th>To</th></tr></thead>
+  <tbody>
+  {% for x in crows %}{% set c = x.r %}
+  <tr>
+    <td class="nowrap">{{ c.sent|dt }}</td>
+    <td><span class="badge">{{ c.type }}</span></td>
+    <td><a href="{{ url_for('a.correspondence', cid=c.id) }}">{{ c.subject or '(no subject)' }}</a></td>
+    <td>{{ x.who.from }}</td>
+    <td>{{ x.who.to }}{% if x.who.failed %} <span class="badge bad" title="SEQTA flagged {{ x.who.failed }} recipient(s) as unsuccessful">{{ x.who.failed }} unsuccessful</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>

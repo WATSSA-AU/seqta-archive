@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{{ P.name }} — SEQTA record</title>
+{% if pdf %}<style>{{ inline_css|safe }}
+@page{size:A4;margin:15mm 14mm 16mm;
+  @bottom-left{content:"CONFIDENTIAL — {{ (school_short or 'student')|replace('"','') }} record {{ P.s.studentCode|replace('"','') }}";font-size:8pt;color:#666}
+  @bottom-right{content:"Page " counter(page) " of " counter(pages);font-size:8pt;color:#666}}
+body{max-width:none;padding:0}</style>
+{% else %}<link rel="stylesheet" href="{{ url_for('a.static', filename='report.css') }}?v={{ version }}">
+<script src="{{ url_for('a.static', filename='app.js') }}?v={{ version }}" defer></script>{% endif %}
+</head>
+<body>
+{% set s = P.s %}
+{% if not pdf %}
+<div class="toolbar noprint">
+  <a class="tbtn" href="{{ url_for('a.bundle_zip', sid=s.studentID, corr=with_corr) }}">Download everything (PDF + attachments)</a>
+  <a class="tbtn ghost" href="{{ url_for('a.report_pdf_download', sid=s.studentID, corr=with_corr) }}">Download PDF</a>
+  <button class="js-print ghost" type="button">Print</button>
+  <span>Correspondence:
+    <a href="?corr=none" class="{{ 'on' if with_corr == 'none' }}">leave out</a> ·
+    <a href="?corr=list" class="{{ 'on' if with_corr == 'list' }}">list subjects</a> ·
+    <a href="?corr=full" class="{{ 'on' if with_corr == 'full' }}">include full text</a>
+  </span>
+  <span class="dim">Large records (hundreds of entries, full correspondence) can take a minute to build.</span>
+</div>
+{% endif %}
+
+<header class="rh">
+  <div class="conf">CONFIDENTIAL — student record — {{ school }}</div>
+  <h1>{{ P.name }}</h1>
+  <p>{{ s.studentCode }} · {{ status_label(s.status) }}{% if s.birth_date %} · born {{ s.birth_date|d }}{% endif %}{% if s.entry_date %} · {% if s.exit_date %}enrolled {{ s.entry_date|d }} – {{ s.exit_date|d }}{% elif s.status == 'FULL' %}enrolled {{ s.entry_date|d }} – present{% else %}entered {{ s.entry_date|d }} (exit date not recorded){% endif %}{% endif %}</p>
+  {% if P.flags %}<p><strong>{{ P.flags|join(' · ') }}</strong></p>{% endif %}
+  <p class="gen">Generated {{ generated }} by {{ user }} from the SEQTA Archive (export database built {{ meta.built_at|d }}). Source: SEQTA offboarding export, unedited.</p>
+</header>
+
+<h2>Details</h2>
+<table class="kv">{% for k, v in P.details %}<tr><th>{{ k }}</th><td>{{ v }}</td></tr>{% endfor %}</table>
+{% for lbl, v in P.notes_on_file %}<div class="e"><div class="eh">{{ lbl }} notes</div><div class="eb">{{ v }}</div></div>{% endfor %}
+
+{% if P.alerts %}<h2>Alerts</h2><p>{% for a in P.alerts %}{{ a.alertType }} (set {{ a.updated_date|d }}){% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+
+{% if P.contacts %}
+<h2>Contacts</h2>
+<table class="grid"><tr><th>Name</th><th>Relationship</th><th>Phone</th><th>Email</th><th>Address</th></tr>
+{% for c in P.contacts %}<tr><td>{{ c.name }}{% if c.custody %}<br><strong>Custody:</strong> {{ c.custody }}{% endif %}</td><td>{{ c.rel }}</td><td class="nowrap">{% for lbl, v in c.phones %}{{ lbl }}: {{ v }}<br>{% endfor %}</td><td>{{ c.email }}</td><td>{{ c.addr }}</td></tr>{% endfor %}
+</table>
+{% endif %}
+
+<h2>Pastoral care ({{ P.pastoral|length }})</h2>
+{% for p in P.pastoral %}
+<div class="e"><div class="eh">{{ p.from|dt }} · {{ p.type }}{% if p.tag %} / {{ p.tag }}{% endif %} · {{ p.staff }}{% if p.restricted %} · RESTRICTED{% endif %}{% if p.followup %} · follow-up {{ 'done' if p.followed_up else 'required' }}{% endif %}</div>
+<div class="eb">{{ p.details }}</div>
+{% if p.sent or p.files %}<div class="ef">{% if p.sent %}Notified: {{ p.sent|join(', ') }}. {% endif %}{% if p.files %}Attachments: {{ p.files|map(attribute='name')|join(', ') }}{% endif %}</div>{% endif %}</div>
+{% else %}<p>None.</p>{% endfor %}
+
+{% if P.sickbay %}
+<h2>Sickbay ({{ P.sickbay|length }})</h2>
+{% for b in P.sickbay %}
+<div class="e"><div class="eh">{{ b.from|dt }} · {{ b.location or 'Sickbay' }} · {{ b.staff }}{% for lbl, det, red in b.flags %} · {{ lbl }}{% endfor %}</div>
+<div class="eb">{{ b.notes }}{% if b.treatment %}
+Treatment: {{ b.treatment }}{% endif %}{% for lbl, det, red in b.flags %}{% if det %}
+{{ lbl }}: {{ det }}{% endif %}{% endfor %}{% for lbl, ts, v in b.extra %}
+{{ lbl }} {{ ts|dt }}: {{ v }}{% endfor %}</div></div>
+{% endfor %}
+{% endif %}
+
+{% if P.notes %}
+<h2>Notes ({{ P.notes|length }})</h2>
+{% for n in P.notes %}<div class="e"><div class="eh">{{ (n.type or 'note')|capitalize }} · {{ n.updated_date|dt }}{% if n.updated_by_staffSalutation %} · {{ n.updated_by_staffSalutation }}{% endif %}{% if n.internal|yes %} · internal{% endif %}</div><div class="eb">{{ n.note }}</div></div>{% endfor %}
+{% endif %}
+
+{% if P.plans %}
+<h2>Support plans ({{ P.plans|length }})</h2>
+{% for x in P.plans %}{% set r = x.r %}
+<div class="e"><div class="eh">{{ r.studentplantype }} · {{ r.status }}{% if r.review_date %} · reviewed {{ r.review_date|d }}{% endif %}{% if r.next_review_date %} · next {{ r.next_review_date|d }}{% endif %}</div>
+<div class="eb">{% if r.panel %}Panel: {{ r.panel }}
+{% endif %}{{ r.background }}{% for lbl, v in x.fields %}
+{{ lbl }}: {{ v }}{% endfor %}</div>
+{% if x.files %}<div class="ef">Attachments: {{ x.files|map(attribute='name')|join(', ') }}</div>{% endif %}</div>
+{% endfor %}
+{% endif %}
+
+{% if P.goals %}
+<h2>Goals</h2>
+{% for gh in P.goals %}{% if gh.h.overview %}<div class="e"><div class="eh">Overview</div><div class="eb">{{ gh.h.overview }}</div></div>{% endif %}
+{% for x in gh.goals %}<div class="e"><div class="eh">{{ x.g.year }}</div><div class="eb">{{ x.g.notes }}{% if x.g.student_notes %}
+Student: {{ x.g.student_notes }}{% endif %}{% for d in x.details %}
+Goal: {{ d.goals }} · Support: {{ d.support }} · Action: {{ d.action }}{% if d.notes %} · {{ d.notes }}{% endif %}{% endfor %}</div></div>{% endfor %}{% endfor %}
+{% endif %}
+
+{% if P.bullying %}
+<h2>Bullying incidents</h2>
+{% for b in P.bullying %}<div class="e"><div class="eh">{{ b.datetime|dt }} · {{ b.type }} · {{ b.role }} · {{ b.status }}</div><div class="eb">{{ b.notes }}{% if b.actions %}
+Actions: {{ b.actions }}{% endif %}</div></div>{% endfor %}
+{% endif %}
+
+{% if P.messages %}
+<h2>SEQTA messages ({{ P.messages|length }})</h2>
+{% for m in P.messages %}<div class="e"><div class="eh">{{ m.r.updated_date|dt }} · {{ m.r.sender_name }} · {{ m.r.subject }}</div><div class="eb">{{ m.text }}</div>{% if m.files %}<div class="ef">Attachments: {{ m.files|map(attribute='name')|join(', ') }}</div>{% endif %}</div>{% endfor %}
+{% endif %}
+
+{% if P.documents %}
+<h2>Documents</h2>
+<p>{{ P.documents|map(attribute='name')|join(', ') }}</p>
+{% endif %}
+
+{% if with_corr != 'none' and corr %}
+<h2>Correspondence ({{ "{:,}".format(corr|length) }})</h2>
+{% if with_corr == 'list' %}
+<table class="grid"><tr><th>Sent</th><th>Type</th><th>Subject</th><th>To</th></tr>
+{% for x in corr %}<tr><td class="nowrap">{{ x.r.sent|d }}</td><td>{{ x.r.type }}</td><td>{{ x.r.subject }}</td><td>{{ x.who.to }}</td></tr>{% endfor %}
+</table>
+{% else %}
+{% for x in corr %}<div class="e"><div class="eh">{{ x.r.sent|dt }} · {{ x.r.type }} · {{ x.r.subject }} · to {{ x.who.to }}</div><div class="eb">{{ x.text }}</div></div>{% endfor %}
+{% endif %}
+{% endif %}
+
+<p class="endnote">End of record. Attachments are not embedded in this report; download them from the student's page in the SEQTA Archive.</p>
+</body>
+</html>

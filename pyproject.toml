@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seqta-archive"
+description = "Read-only, audited web viewer for a school's SEQTA offboarding export"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dynamic = ["version"]
+dependencies = [
+    "flask>=3.0,<3.2",
+    "waitress>=3.0",
+    "segno>=1.6",
+    "tzdata; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+pdf = ["weasyprint>=62,<67"]
+test = ["pytest>=8"]
+
+[project.scripts]
+seqta-archive = "seqta_archive.cli:main"
+
+[tool.setuptools]
+packages = ["seqta_archive"]
+
+[tool.setuptools.dynamic]
+version = { attr = "seqta_archive.__version__" }
+
+[tool.setuptools.package-data]
+seqta_archive = ["templates/*.html", "static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

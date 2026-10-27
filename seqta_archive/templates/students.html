@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager, status with context %}
+{% block title %}Students{% endblock %}
+{% block main %}
+<h1>Students</h1>
+<form class="filters" action="{{ url_for('a.students') }}">
+  <input name="q" type="search" value="{{ text }}" placeholder="Name, student code, username or government ID" autocomplete="off">
+  <select name="status" aria-label="Status">
+    <option value="">Any status</option>
+    <option value="FULL" {{ 'selected' if status == 'FULL' }}>Enrolled at export</option>
+    <option value="LEFT" {{ 'selected' if status == 'LEFT' }}>Left</option>
+  </select>
+  <select name="year" aria-label="Year">
+    <option value="">Any year</option>
+    {% for k, v in years %}<option value="{{ k }}" {{ 'selected' if year == k }}>Year {{ v }}</option>{% endfor %}
+  </select>
+  <button type="submit">Search</button>
+</form>
+{% if rows %}
+<div class="tw">
+<table class="t">
+  <thead><tr><th>Name</th><th>Code</th><th>Year</th><th>Roll</th><th>House</th><th>Born</th><th>Entry</th><th>Exit</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for x in rows %}
+  <tr class="rowlink">
+    <td><a href="{{ url_for('a.student', sid=x.r.studentID) }}"><strong>{{ x.name }}</strong></a>{% if x.r.prefname and x.r.prefname != x.r.firstname %} <span class="dim">({{ x.r.firstname }})</span>{% endif %}</td>
+    <td>{{ x.r.studentCode }}</td>
+    <td>{{ x.year }}</td><td>{{ x.roll }}</td><td>{{ x.house }}</td>
+    <td>{{ x.r.birth_date|d }}</td><td>{{ x.r.entry_date|d }}</td><td>{{ x.r.exit_date|d }}</td>
+    <td>{{ status(x.r.status) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(pg) }}
+{% else %}
+<p class="empty">No students match.</p>
+{% endif %}
+{% endblock %}
