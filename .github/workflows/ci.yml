@@ -67,17 +67,17 @@ jobs:
           mkdir -p /tmp/data && chmod 777 /tmp/data
           docker run --rm -v /tmp/x:/export:ro -v /tmp/data:/data seqta-archive:ci build --export /export --out /data/seqta.db
           ls -la /tmp/data
-          docker run -d --name a -p 8080:8080 -e COOKIE_SECURE=0 -v /tmp/data:/data:ro -v /tmp/x:/export:ro seqta-archive:ci
+          docker run -d --name smoke -p 8080:8080 -e COOKIE_SECURE=0 -v /tmp/data:/data:ro -v /tmp/x:/export:ro seqta-archive:ci
           for i in $(seq 1 30); do curl -fsS localhost:8080/readyz && break; sleep 1; done
           curl -fsS localhost:8080/login | grep -q "SEQTA Archive"
-          echo "a long docker password" | docker exec -i a seqta-archive user add admin --admin --password-stdin
-          docker exec a seqta-archive check
+          echo "a long docker password" | docker exec -i smoke seqta-archive user add admin --admin --password-stdin
+          docker exec smoke seqta-archive check
       - name: Report smoke-test output
-        if: always()
+        if: failure()
         run: |
-          m=$(tail -n 40 /tmp/smoke.log 2>&1; echo "--- container:"; docker logs a 2>&1 | tail -n 20)
+          m=$(tail -n 40 /tmp/smoke.log 2>&1; echo "--- container:"; docker logs smoke 2>&1 | tail -n 20)
           m=${m//'%'/'%25'}; m=${m//$'\r'/}; m=${m//$'\n'/'%0A'}
-          echo "::notice title=smoke log::$m"
+          echo "::error title=smoke log::$m"
       - name: Publish image (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
