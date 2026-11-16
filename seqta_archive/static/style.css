@@ -20,6 +20,9 @@ main{max-width:1200px;margin:0 auto;padding:1.25rem 1rem 2rem}
 /* header */
 .top{display:flex;align-items:center;gap:1rem;background:var(--nav);color:var(--navink);
   padding:.55rem 1rem;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.top .back{color:var(--navink);font-size:13px;white-space:nowrap;padding:.3rem .6rem;
+  border:1px solid #33405f;border-radius:5px}
+.top .back:hover{background:#26335a;text-decoration:none}
 .brand{color:#fff;font-weight:700;white-space:nowrap}
 .brand .mark{color:#8fa6ff}
 .top .qs{flex:1;min-width:200px;max-width:460px}

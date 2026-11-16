@@ -94,6 +94,11 @@ ARCHIVE_NOTE = env(
     "This is the full export SEQTA supplied when the school stopped using SEQTA, "
     "loaded unchanged: nothing has been edited or summarised.")
 TIMEZONE = env("TIMEZONE", "Australia/Perth")
+# Optional "back to" link at the left of the header, e.g. to a staff portal on the same host.
+PORTAL_URL = env("PORTAL_URL", "").strip()
+if PORTAL_URL and not (PORTAL_URL.startswith("/") or PORTAL_URL.lower().startswith(("https://", "http://"))):
+    PORTAL_URL = ""                       # only plain links, never javascript: and the like
+PORTAL_LABEL = env("PORTAL_LABEL", "Staff portal").strip() or "Staff portal"
 
 # ---------------------------------------------------------------- auth
 AUTH_MODE = env("AUTH_MODE", "local").strip().lower()      # local | proxy

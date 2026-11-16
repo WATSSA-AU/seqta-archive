@@ -471,6 +471,7 @@ def page_url(n):
 def ctx():
     return {"page_url": page_url, "school": SCHOOL_NAME, "school_short": config.SCHOOL_SHORT,
             "archive_note": config.ARCHIVE_NOTE, "version": APP_VERSION,
+            "portal_url": config.PORTAL_URL, "portal_label": config.PORTAL_LABEL,
             "meta": LK.meta if LK.loaded else {},
             "user": getattr(g, "user", ""), "display": getattr(g, "display", "") or
             getattr(g, "user", ""), "is_admin": getattr(g, "is_admin", False),

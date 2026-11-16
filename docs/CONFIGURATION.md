@@ -14,6 +14,8 @@ Restart the app after changing settings.
 | `SCHOOL_NAME` | `Our school` | Shown on every page and in reports |
 | `SCHOOL_SHORT` | | Short name, used in PDF footers and the authenticator-app label |
 | `ARCHIVE_NOTE` | (generic) | The "About this archive" paragraph on the home page |
+| `PORTAL_URL` | | Adds a "← back" link at the left of the header, e.g. `/` or `https://portal.example.edu.au/`. Relative paths and http(s) only |
+| `PORTAL_LABEL` | `Staff portal` | Text of that link |
 | `TIMEZONE` | `Australia/Perth` | Used for audit times and report timestamps |
 
 ## Paths
