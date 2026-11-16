@@ -86,3 +86,25 @@ for url in ["/", "/student/4", "/student/4/report", "/student/4/bundle.zip", "/s
 print("tolerant ok")
 """, {"AUTH_MODE": "local", "URL_PREFIX": "", "COOKIE_SECURE": "0"}, tmp_path)
     assert "tolerant ok" in out
+
+
+def test_portal_link(tmp_path):
+    out = run(BUILD.format(extra="[]") + """
+from seqta_archive import web
+app = web.create_app(); c = app.test_client()
+H = {"X-Forwarded-User": "e1", "X-Forwarded-Groups": "seqta-archive-users"}
+html = c.get("/seqta/", headers=H).get_data(as_text=True)
+assert '<a class="back" href="/" title="Back to the Staff Portal">' in html, html[:2000]
+assert c.get("/seqta/student/1", headers=H).status_code == 200
+print("portal ok")
+""", {"AUTH_MODE": "proxy", "URL_PREFIX": "/seqta", "PORTAL_URL": "/", "PORTAL_LABEL": "Staff Portal"}, tmp_path)
+    assert "portal ok" in out
+
+
+def test_portal_link_rejects_script_urls(tmp_path):
+    out = run("""
+from seqta_archive import config
+assert config.PORTAL_URL == "", config.PORTAL_URL
+print("rejected ok")
+""", {"PORTAL_URL": "javascript:alert(1)"}, tmp_path)
+    assert "rejected ok" in out

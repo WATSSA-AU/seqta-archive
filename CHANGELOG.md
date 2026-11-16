@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.0
+
+- `PORTAL_URL` and `PORTAL_LABEL`: an optional "← Staff portal" link at the left of the header, for schools that open the archive from an intranet or staff portal. Off unless `PORTAL_URL` is set; only relative paths and http(s) links are accepted.
+
 ## 3.0.0 (first public release)
 
 - Generic package: works with any school's SEQTA offboarding export.

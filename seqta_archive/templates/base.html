@@ -11,6 +11,7 @@
 <body class="{% block bodyclass %}{% endblock %}">
 {% block header %}
 <header class="top">
+  {% if portal_url %}<a class="back" href="{{ portal_url }}" title="Back to the {{ portal_label }}">← {{ portal_label }}</a>{% endif %}
   <a class="brand" href="{{ url_for('a.home') }}"><span class="mark">▣</span> SEQTA Archive</a>
   <form class="qs" action="{{ url_for('a.students') }}" role="search">
     <input name="q" type="search" placeholder="Find a student — name, code or username" autocomplete="off"
